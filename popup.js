@@ -543,6 +543,7 @@ function updateToggle(enabled) {
   const btn = document.getElementById('btn-toggle');
   btn.classList.toggle('enabled',  enabled);
   btn.classList.toggle('disabled', !enabled);
+  btn.setAttribute('aria-checked', enabled ? 'true' : 'false');
   btn.title = enabled ? '浮動按鈕：開啟（點擊關閉）' : '浮動按鈕：關閉（點擊開啟）';
 }
 

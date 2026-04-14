@@ -34,26 +34,12 @@ async function init() {
     });
   }
 
-  // Check API key and mode
-  const { apiKey, geminiKey, groqKey, defaultList, extractMode } = await chrome.storage.sync.get(['apiKey', 'geminiKey', 'groqKey', 'defaultList', 'extractMode']);
-  const mode = extractMode || 'groq';
 
-  const needsKey = (mode === 'claude' && !apiKey) || (mode === 'gemini' && !geminiKey) || (mode === 'groq' && !groqKey);
-  if (needsKey) {
+  // Check API key
+  const { groqKey, defaultList } = await chrome.storage.sync.get(['groqKey', 'defaultList']);
+
+  if (!groqKey) {
     document.getElementById('api-key-warning').classList.remove('hidden');
-  }
-
-  // 顯示目前模式
-  const badge = document.getElementById('platform-badge');
-  if (badge && !badge.classList.contains('hidden')) {
-    // badge already showing platform name
-  }
-  const modeTag = document.getElementById('mode-tag');
-  if (modeTag) {
-    const labels = { local: '本地模式', groq: 'Groq AI', gemini: 'Gemini AI', claude: 'Claude AI' };
-    const colors  = { local: '#5f6368', groq: '#f55036', gemini: '#1a73e8', claude: '#7c4dff' };
-    modeTag.textContent = labels[mode] || mode;
-    modeTag.style.background = colors[mode] || '#5f6368';
   }
 
   if (defaultList) {
@@ -72,19 +58,16 @@ async function init() {
   });
 
   // ── Groq 用量顯示 ────────────────────────────────────────
-  if (mode === 'groq') {
-    const { groqUsage } = await chrome.storage.local.get('groqUsage');
-    const today = new Date().toISOString().slice(0, 10);
-    if (groqUsage?.date === today) updateUsageBar(groqUsage.tokens);
-    document.getElementById('usage-bar').classList.remove('hidden');
-    // 即時更新（分析完成後 background 會寫 storage）
-    chrome.storage.onChanged.addListener((changes, area) => {
-      if (area === 'local' && changes.groqUsage) {
-        const u = changes.groqUsage.newValue;
-        if (u?.date === today) updateUsageBar(u.tokens);
-      }
-    });
-  }
+  const { groqUsage } = await chrome.storage.local.get('groqUsage');
+  const today = new Date().toISOString().slice(0, 10);
+  if (groqUsage?.date === today) updateUsageBar(groqUsage.tokens);
+  document.getElementById('usage-bar').classList.remove('hidden');
+  chrome.storage.onChanged.addListener((changes, area) => {
+    if (area === 'local' && changes.groqUsage) {
+      const u = changes.groqUsage.newValue;
+      if (u?.date === today) updateUsageBar(u.tokens);
+    }
+  });
 
   // 偵測選取文字：先查 pendingSelection（浮動按鈕觸發），再查當前分頁選取
   let hasSelection = false;
@@ -144,18 +127,14 @@ async function onAnalyzeSelection() {
   const text = document.getElementById('selection-section').dataset.selectionText;
   if (!text) return;
 
-  const { apiKey, geminiKey, groqKey, extractMode } = await chrome.storage.sync.get(['apiKey', 'geminiKey', 'groqKey', 'extractMode']);
-  const mode = extractMode || 'groq';
-  const modeLabel = { local: '本地', groq: 'Groq AI', gemini: 'Gemini AI', claude: 'Claude AI' }[mode] || mode;
+  const { groqKey } = await chrome.storage.sync.get('groqKey');
 
-  showLoading(`正在用 ${modeLabel} 分析選取內容...`);
+  showLoading('正在用 Groq AI 分析選取內容...');
   try {
-    const activeKey = mode === 'groq' ? (groqKey || '') : mode === 'gemini' ? (geminiKey || '') : (apiKey || '');
     const result = await chrome.runtime.sendMessage({
       action: 'extractPlaces',
       text,
-      apiKey: activeKey,
-      mode,
+      apiKey: groqKey || '',
     });
     hideLoading();
     if (!result.success) { alert(`分析失敗：${result.error}`); return; }
@@ -170,10 +149,9 @@ async function onAnalyzeSelection() {
 // ─── Extract ───────────────────────────────────────────────────────────────────
 
 async function onExtract() {
-  const { apiKey, geminiKey, groqKey, extractMode } = await chrome.storage.sync.get(['apiKey', 'geminiKey', 'groqKey', 'extractMode']);
-  const mode = extractMode || 'groq';
+  const { groqKey } = await chrome.storage.sync.get('groqKey');
 
-  if (mode === 'claude' && !apiKey) {
+  if (!groqKey) {
     chrome.runtime.openOptionsPage();
     return;
   }
@@ -204,16 +182,12 @@ async function onExtract() {
       }
     }
 
-    const modeLabel = { local: '本地', groq: 'Groq AI', gemini: 'Gemini AI', claude: 'Claude AI' }[mode] || mode;
-    updateLoadingText(`正在用 ${modeLabel} 分析 ${contentResult.platform || ''} 的內容...`);
+    updateLoadingText(`正在用 Groq AI 分析 ${contentResult.platform || ''} 的內容...`);
 
-    // AI 抽取
-    const activeKey = mode === 'groq' ? (groqKey || '') : mode === 'gemini' ? (geminiKey || '') : (apiKey || '');
     const result = await chrome.runtime.sendMessage({
       action: 'extractPlaces',
       text: contentResult.text,
-      apiKey: activeKey,
-      mode,
+      apiKey: groqKey,
     });
 
     hideLoading();

@@ -1,16 +1,12 @@
 // background.js - Service Worker
-// Handles extraction (local or Claude API) and Google Maps tab automation
-
-importScripts('local_extractor.js');
-
-const CLAUDE_API_URL = 'https://api.anthropic.com/v1/messages';
+// Handles extraction (Groq API) and Google Maps tab automation
 
 // Track save progress for each session
 const saveProgress = {};
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === 'extractPlaces') {
-    handleExtractPlaces(message.text, message.apiKey, message.mode)
+    handleExtractPlaces(message.text, message.apiKey)
       .then(result => sendResponse(result))
       .catch(err => sendResponse({ success: false, error: err.message }));
     return true;
@@ -53,17 +49,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
 // ─── Extraction dispatcher ────────────────────────────────────────────────────
 
-async function handleExtractPlaces(text, apiKey, mode) {
+async function handleExtractPlaces(text, apiKey) {
   if (!text || text.trim().length < 5) return { success: false, error: 'No content to analyze.' };
 
   // 頁面內容超過 300 字才預處理（短文如手動選取不需要）
   const processedText = text.length > 300 ? preprocessForAI(text) : text;
-
-  if (mode === 'local')  return handleLocalExtract(processedText);
-  if (mode === 'gemini') return handleGeminiExtract(processedText, apiKey);
-  if (mode === 'groq')   return handleGroqExtract(processedText, apiKey);
-  if (mode === 'claude') return handleClaudeExtract(processedText, apiKey);
-  return handleLocalExtract(processedText);
+  return handleGroqExtract(processedText, apiKey);
 }
 
 // ─── 智慧內容預處理器（減少 token 用量）────────────────────────────────────────
@@ -118,17 +109,8 @@ function preprocessForAI(text) {
   return out || text.slice(0, 900);
 }
 
-function handleLocalExtract(text) {
-  try {
-    const places = localExtractPlaces(text);
-    return { success: true, places, mode: 'local' };
-  } catch (err) {
-    return { success: false, error: err.message };
-  }
-}
-
-// ─── Groq API（免費方案，推薦）───────────────────────────────────────────────
-// 免費額度：每天 14,400 次（llama 模型），速度極快
+// ─── Groq API ────────────────────────────────────────────────────────────────
+// 免費額度：每日 100,000 tokens，速度快
 // 取得 Key：https://console.groq.com（不需信用卡）
 
 const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
@@ -172,10 +154,6 @@ async function trackGroqUsage(tokens) {
   await chrome.storage.local.set({ groqUsage: { date: today, tokens: prev + tokens } });
 }
 
-// ─── Google Gemini API（免費方案）────────────────────────────────────────────
-// 免費額度：每分鐘 15 次、每天 1500 次
-// 取得 Key：https://aistudio.google.com/apikey（不需信用卡）
-
 // ─── 共用：Prompt 與 JSON 解析 ───────────────────────────────────────────────
 
 function buildExtractionPrompt(text) {
@@ -206,66 +184,6 @@ function parsePlacesJson(raw, modeName) {
   } catch {
     return { success: false, error: `無法解析 ${modeName} 回傳的內容。` };
   }
-}
-
-// Gemini（格式與 OpenAI 不同，單獨處理）
-function getGeminiUrl(model) {
-  return `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
-}
-
-async function handleGeminiExtract(text, apiKey) {
-  if (!apiKey) return { success: false, error: 'Gemini API Key 未設定，請前往設定頁面。' };
-
-  const { geminiModel } = await chrome.storage.sync.get(['geminiModel']);
-  const model = geminiModel || 'gemini-2.0-flash';
-  const url = getGeminiUrl(model);
-
-  const response = await fetch(`${url}?key=${apiKey}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      contents: [{ parts: [{ text: buildExtractionPrompt(text) }] }],
-      generationConfig: { temperature: 0.1, maxOutputTokens: 1024 },
-    }),
-  });
-
-  if (!response.ok) {
-    const err = await response.json().catch(() => ({}));
-    return { success: false, error: `Gemini API 錯誤：${err.error?.message || response.statusText}` };
-  }
-
-  const data = await response.json();
-  const raw = data.candidates?.[0]?.content?.parts?.[0]?.text || '[]';
-  return parsePlacesJson(raw, 'gemini');
-}
-
-// ─── Claude API ───────────────────────────────────────────────────────────────
-
-async function handleClaudeExtract(text, apiKey) {
-  if (!apiKey) return { success: false, error: 'Claude API Key 未設定，請前往設定頁面。' };
-
-  const response = await fetch(CLAUDE_API_URL, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': apiKey,
-      'anthropic-version': '2023-06-01',
-    },
-    body: JSON.stringify({
-      model: 'claude-haiku-4-5-20251001',
-      max_tokens: 1024,
-      messages: [{ role: 'user', content: buildExtractionPrompt(text) }],
-    }),
-  });
-
-  if (!response.ok) {
-    const err = await response.json().catch(() => ({}));
-    return { success: false, error: `Claude API 錯誤：${err.error?.message || response.statusText}` };
-  }
-
-  const data = await response.json();
-  const raw = data.content?.[0]?.text || '[]';
-  return parsePlacesJson(raw, 'claude');
 }
 
 // ─── Google Maps Automation ───────────────────────────────────────────────────

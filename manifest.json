@@ -19,7 +19,7 @@
     "https://twitter.com/*",
     "https://x.com/*",
     "https://www.threads.net/*",
-    "https://api.anthropic.com/*"
+    "https://api.groq.com/*"
   ],
   "action": {
     "default_popup": "popup.html",

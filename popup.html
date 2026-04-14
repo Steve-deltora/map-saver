@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>地圖收藏助手</title>
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+  <div id="app">
+
+    <!-- Header -->
+    <header>
+      <img src="icons/icon.png" class="header-icon" style="width:24px;height:24px;object-fit:contain;" />
+      <div class="header-text">
+        <h1>地圖收藏助手</h1>
+        <div style="display:flex;gap:4px;margin-top:2px;">
+          <span id="platform-badge" class="badge hidden"></span>
+          <span id="mode-tag" class="badge" style="background:#34a853">免費模式</span>
+        </div>
+      </div>
+      <button id="btn-toggle" class="btn-toggle enabled" title="啟用／停用浮動按鈕">●</button>
+      <button id="btn-settings" class="icon-btn" title="設定">⚙️</button>
+    </header>
+
+    <!-- Groq 用量列 -->
+    <div id="usage-bar" class="usage-bar hidden">
+      <span class="usage-label">Groq 今日</span>
+      <div class="usage-track"><div id="usage-fill" class="usage-fill-bar"></div></div>
+      <span id="usage-text">0 / 100k</span>
+    </div>
+
+    <!-- API Key Warning (only for Claude mode) -->
+    <div id="api-key-warning" class="alert alert-warn hidden">
+      ⚠️ 尚未設定 API Key，請先前往設定。
+      <button id="btn-go-settings" class="link-btn">前往設定</button>
+    </div>
+
+    <!-- Step 1: Extract -->
+    <section id="section-extract">
+      <div class="section-title">步驟 1：讀取貼文內容</div>
+
+      <!-- 選取文字預覽（有選取時顯示） -->
+      <div id="selection-section" class="selection-section hidden">
+        <div class="selection-label">✂️ 選取的文字</div>
+        <div id="selection-preview" class="selection-preview"></div>
+        <button id="btn-analyze-selection" class="btn btn-primary btn-full">
+          <span class="btn-icon">🔍</span> 分析選取內容，抽取店名
+        </button>
+      </div>
+
+      <!-- 目前分頁 / 貼上連結 -->
+      <div class="url-input-row">
+        <input type="text" id="input-url" placeholder="載入中..." autocomplete="off" spellcheck="false" />
+      </div>
+      <button id="btn-extract" class="btn btn-outline btn-full">
+        <span class="btn-icon">🔍</span> 分析網址頁面
+      </button>
+    </section>
+
+    <!-- Step 2: Review places -->
+    <section id="section-places" class="hidden">
+      <div class="section-title">
+        步驟 2：確認找到的地點
+        <button id="btn-reset" class="link-btn small">重新分析</button>
+      </div>
+
+      <div id="places-empty" class="empty-state hidden">
+        <div class="empty-icon">🔎</div>
+        <div>沒有找到任何地點</div>
+        <div class="empty-hint">試著切換到含有店名的貼文</div>
+      </div>
+
+      <div id="places-list"></div>
+
+      <div id="select-all-row" class="select-all-row hidden">
+        <label>
+          <input type="checkbox" id="chk-select-all" checked /> 全選 (<span id="selected-count">0</span>/<span id="total-count">0</span>)
+        </label>
+      </div>
+    </section>
+
+    <!-- Step 3: Save settings -->
+    <section id="section-save" class="hidden">
+      <div class="section-title">步驟 3：儲存到 Google Maps</div>
+
+      <div class="form-row">
+        <label for="list-name">目標清單名稱</label>
+        <input type="text" id="list-name" placeholder="輸入你的 Google Maps 清單名稱" style="width:100%" />
+        <div id="list-suggestions" class="suggestions hidden"></div>
+      </div>
+
+      <button id="btn-save" class="btn btn-success btn-full">
+        <span class="btn-icon">💾</span> 儲存到 Google Maps
+      </button>
+    </section>
+
+    <!-- Progress -->
+    <section id="section-progress" class="hidden">
+      <div class="section-title">儲存進度</div>
+      <div id="progress-list"></div>
+      <div id="progress-summary" class="progress-summary hidden"></div>
+      <button id="btn-done" class="btn btn-primary btn-full hidden">完成</button>
+    </section>
+
+    <!-- Loading overlay -->
+    <div id="loading" class="loading hidden">
+      <div class="spinner"></div>
+      <div id="loading-text">處理中...</div>
+    </div>
+
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

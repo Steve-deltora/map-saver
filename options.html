@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <title>地圖收藏助手 - 設定</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans TC', sans-serif;
+      font-size: 14px;
+      color: #202124;
+      background: #f8f9fa;
+      min-height: 100vh;
+      padding: 24px;
+    }
+
+    .container {
+      max-width: 520px;
+      margin: 0 auto;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 24px;
+    }
+
+    header h1 { font-size: 20px; font-weight: 600; }
+    header .subtitle { font-size: 13px; color: #5f6368; }
+
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 16px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .card-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: #5f6368;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 16px;
+    }
+
+    .form-group { margin-bottom: 16px; }
+    .form-group:last-child { margin-bottom: 0; }
+
+    label { display: block; font-weight: 500; margin-bottom: 6px; font-size: 13px; }
+
+    .label-hint { font-weight: 400; color: #5f6368; font-size: 12px; display: block; margin-top: 2px; }
+
+    input[type="text"], input[type="password"] {
+      width: 100%;
+      padding: 9px 12px;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 13px;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    input[type="text"]:focus, input[type="password"]:focus {
+      border-color: #1a73e8;
+    }
+
+    .input-row { display: flex; gap: 8px; align-items: center; }
+    .input-row input { flex: 1; }
+
+    .btn {
+      padding: 8px 16px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      transition: background 0.15s;
+    }
+
+    .btn-primary { background: #1a73e8; color: white; }
+    .btn-primary:hover { background: #1557b0; }
+
+    .btn-outline {
+      background: none;
+      border: 1px solid #e0e0e0;
+      color: #202124;
+    }
+    .btn-outline:hover { background: #f8f9fa; }
+
+    .btn-full { width: 100%; margin-top: 4px; }
+
+    .save-btn-row {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+      padding-top: 8px;
+    }
+
+    .alert {
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      margin-top: 12px;
+    }
+
+    .alert-success { background: #e6f4ea; color: #137333; }
+    .alert-error   { background: #fce8e6; color: #c5221f; }
+
+    .hidden { display: none !important; }
+
+    .api-key-link { font-size: 12px; color: #1a73e8; margin-top: 4px; display: inline-block; }
+
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 0;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    .toggle-row:last-child { border-bottom: none; }
+
+    .toggle-label { font-size: 13px; }
+
+    .info-block {
+      background: #e8f0fe;
+      border-radius: 8px;
+      padding: 12px 14px;
+      font-size: 12px;
+      color: #1a47b8;
+      line-height: 1.6;
+    }
+    .info-block ol { padding-left: 16px; margin-top: 6px; }
+
+    .mode-selector { display: flex; flex-direction: column; gap: 8px; }
+
+    .mode-option {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      padding: 12px;
+      border: 2px solid #e0e0e0;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+    }
+
+    .mode-option:has(input:checked) {
+      border-color: #1a73e8;
+      background: #e8f0fe;
+    }
+
+    .mode-option input[type="radio"] { margin-top: 2px; flex-shrink: 0; }
+
+    .mode-title { font-weight: 600; font-size: 13px; margin-bottom: 3px; }
+    .mode-desc  { font-size: 12px; color: #5f6368; line-height: 1.5; }
+
+    .model-chip {
+      display: inline-block;
+      padding: 2px 8px;
+      background: #e8f0fe;
+      color: #1a73e8;
+      border-radius: 99px;
+      font-size: 11px;
+      cursor: pointer;
+      border: 1px solid #c5d8fd;
+    }
+    .model-chip:hover { background: #c5d8fd; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <span style="font-size:28px">📍</span>
+      <div>
+        <h1>地圖收藏助手</h1>
+        <span class="subtitle">設定</span>
+      </div>
+    </header>
+
+    <!-- Extraction Mode -->
+    <div class="card">
+      <div class="card-title">抽取模式</div>
+
+      <div class="mode-selector">
+        <label class="mode-option">
+          <input type="radio" name="extract-mode" value="local" id="mode-local" />
+          <div class="mode-content">
+            <div class="mode-title">🆓 本地模式</div>
+            <div class="mode-desc">Regex + 關鍵字規則，不需 API Key，完全離線。準確度較低，容易誤抓描述句子。</div>
+          </div>
+        </label>
+
+        <label class="mode-option">
+          <input type="radio" name="extract-mode" value="groq" id="mode-groq" />
+          <div class="mode-content">
+            <div class="mode-title">⚡ Groq AI（推薦，免費）</div>
+            <div class="mode-desc">Llama 3.3 70B 模型，每天 14,400 次免費，速度極快，不需信用卡。準確度高。</div>
+          </div>
+        </label>
+
+        <label class="mode-option">
+          <input type="radio" name="extract-mode" value="gemini" id="mode-gemini" />
+          <div class="mode-content">
+            <div class="mode-title">✨ Gemini AI（免費）</div>
+            <div class="mode-desc">Google Gemini，需要從 AI Studio 申請 Key（非 Cloud Console）。</div>
+          </div>
+        </label>
+
+        <label class="mode-option">
+          <input type="radio" name="extract-mode" value="claude" id="mode-claude" />
+          <div class="mode-content">
+            <div class="mode-title">🤖 Claude AI（最準確）</div>
+            <div class="mode-desc">Claude Haiku，準確度最高。每次約 $0.0001，需要 Anthropic API Key。</div>
+          </div>
+        </label>
+      </div>
+    </div>
+
+    <!-- API Key（依模式顯示） -->
+    <div class="card" id="api-key-card">
+      <div class="card-title" id="api-key-card-title">API 金鑰</div>
+
+      <!-- Groq -->
+      <div id="groq-key-section" class="form-group">
+        <label>
+          Groq API Key
+          <span class="label-hint">免費取得，每天 14,400 次</span>
+        </label>
+        <div class="input-row">
+          <input type="password" id="groq-key" placeholder="gsk_..." />
+          <button class="btn btn-outline" id="btn-toggle-groq">顯示</button>
+        </div>
+        <a class="api-key-link" href="https://console.groq.com/keys" target="_blank">
+          → 前往 Groq Console 免費取得 API Key
+        </a>
+      </div>
+
+      <!-- Gemini -->
+      <div id="gemini-key-section" class="form-group" style="display:none">
+        <label>
+          Gemini API Key
+          <span class="label-hint">免費取得，不需信用卡</span>
+        </label>
+        <div class="input-row">
+          <input type="password" id="gemini-key" placeholder="AIza..." />
+          <button class="btn btn-outline" id="btn-toggle-gemini">顯示</button>
+        </div>
+        <a class="api-key-link" href="https://aistudio.google.com/apikey" target="_blank">
+          → 前往 Google AI Studio 免費取得 Gemini API Key（不需信用卡）
+        </a>
+      </div>
+
+      <div class="form-group">
+        <label>
+          Gemini Model
+          <span class="label-hint">不確定填哪個？先用預設值，出錯再換</span>
+        </label>
+        <div class="input-row">
+          <input type="text" id="gemini-model" placeholder="gemini-2.0-flash" />
+        </div>
+        <div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:4px" id="model-suggestions"></div>
+        <a class="api-key-link" href="https://ai.google.dev/gemini-api/docs/models" target="_blank">
+          → 查看目前可用的 Gemini Models
+        </a>
+      </div>
+
+      <!-- Claude -->
+      <div id="claude-key-section" class="form-group" style="display:none">
+        <label>
+          Claude API Key
+          <span class="label-hint">需要 Anthropic 帳號</span>
+        </label>
+        <div class="input-row">
+          <input type="password" id="api-key" placeholder="sk-ant-api03-..." />
+          <button class="btn btn-outline" id="btn-toggle-key">顯示</button>
+        </div>
+        <a class="api-key-link" href="https://console.anthropic.com/settings/keys" target="_blank">
+          → 前往 Anthropic Console 取得 API Key
+        </a>
+      </div>
+    </div>
+
+    <!-- Default Settings -->
+    <div class="card">
+      <div class="card-title">預設設定</div>
+
+      <div class="form-group">
+        <label>
+          預設 Google Maps 清單名稱
+          <span class="label-hint">每次開啟插件時自動填入</span>
+        </label>
+        <input type="text" id="default-list" placeholder="例如：想去的餐廳" />
+      </div>
+    </div>
+
+    <!-- Usage Guide -->
+    <div class="card">
+      <div class="card-title">使用說明</div>
+      <div class="info-block">
+        <strong>使用步驟：</strong>
+        <ol>
+          <li>瀏覽 Instagram、Facebook、YouTube 等社群媒體貼文</li>
+          <li>點擊工具列的 📍 插件圖示</li>
+          <li>點擊「分析貼文，抽取店名」</li>
+          <li>確認找到的地點，選擇目標清單</li>
+          <li>點擊「儲存到 Google Maps」</li>
+        </ol>
+        <br/>
+        <strong>注意：</strong>首次儲存時會開啟 Google Maps，請確認已登入 Google 帳戶。
+      </div>
+    </div>
+
+    <div class="save-btn-row">
+      <button class="btn btn-outline" id="btn-cancel">取消</button>
+      <button class="btn btn-primary" id="btn-save">儲存設定</button>
+    </div>
+
+    <div id="alert" class="alert hidden"></div>
+  </div>
+
+  <script src="options.js"></script>
+</body>
+</html>

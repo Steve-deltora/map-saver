@@ -2,6 +2,13 @@
 
 一個 Chrome 擴充功能，從 Instagram、Facebook、YouTube 等社群媒體貼文中自動抽取店家名稱，並一鍵存入 Google Maps 收藏清單。
 
+
+
+https://github.com/user-attachments/assets/1f2221bd-390f-4c51-a0a7-12a88bc5d7c7
+
+
+
+
 ---
 
 ## 功能
